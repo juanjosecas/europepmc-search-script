@@ -58,20 +58,31 @@ except ImportError:
 logging.basicConfig(filename='nlp_analysis.log', level=logging.INFO,
                    format='%(asctime)s - %(levelname)s - %(message)s')
 
+# Track if NLTK data has been downloaded in this session
+_nltk_data_downloaded = False
+
 # Download required NLTK data
 def download_nltk_data():
     """Download required NLTK data packages."""
+    global _nltk_data_downloaded
+    
+    if _nltk_data_downloaded:
+        return
+    
     try:
         nltk.data.find('tokenizers/punkt_tab')
         nltk.data.find('corpora/stopwords')
+        _nltk_data_downloaded = True
     except LookupError:
         print("Downloading required NLTK data...")
         try:
             nltk.download('punkt_tab', quiet=True)
-        except:
+        except (LookupError, OSError):
+            # Fallback to older punkt if punkt_tab is not available
             nltk.download('punkt', quiet=True)
         nltk.download('stopwords', quiet=True)
         print("NLTK data downloaded successfully.")
+        _nltk_data_downloaded = True
 
 def load_data(file_path, file_format='csv'):
     """Load data from CSV, JSON, or Excel file."""
@@ -116,7 +127,7 @@ def preprocess_text(text, remove_stopwords=True):
         try:
             stop_words = set(stopwords.words('english'))
             tokens = [token for token in tokens if token not in stop_words and len(token) > 2]
-        except:
+        except (LookupError, OSError):
             # If stopwords are not available, just filter short words
             tokens = [token for token in tokens if len(token) > 2]
     

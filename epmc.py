@@ -61,7 +61,20 @@ def display_statistics(results):
         print(f"  {journal}: {count} ({percentage:.1f}%)")
     
     # Citation statistics
-    citations = [int(hit.get('citedByCount', 0)) for hit in results if hit.get('citedByCount')]
+    citations = []
+    for hit in results:
+        try:
+            cite_count = hit.get('citedByCount')
+            if cite_count is not None:
+                # Try to convert to integer or float
+                if isinstance(cite_count, (int, float)):
+                    citations.append(int(cite_count))
+                elif isinstance(cite_count, str):
+                    # Handle string representations of numbers
+                    citations.append(int(float(cite_count)))
+        except (ValueError, TypeError):
+            continue
+    
     if citations:
         avg_citations = sum(citations) / len(citations)
         max_citations = max(citations)
